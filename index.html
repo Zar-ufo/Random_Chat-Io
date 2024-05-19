@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chat App</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f0f0f0;
+            color: #333;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+        #login-container {
+            text-align: center;
+            padding: 20px;
+            border-radius: 10px;
+            background-color: #fff;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+        #random-chat-heading {
+            font-size: 36px;
+            margin-bottom: 20px;
+            color: #333;
+        }
+        #username {
+            padding: 10px;
+            border-radius: 5px;
+            border: 1px solid #ccc;
+            margin: 10px;
+            width: 200px;
+            font-size: 16px;
+            outline: none;
+        }
+        #login-button {
+            background-color: #333;
+            color: #fff;
+            border: none;
+            padding: 10px 20px;
+            cursor: pointer;
+            border-radius: 5px;
+            font-size: 16px;
+            transition: background-color 0.3s;
+        }
+        #login-button:hover {
+            background-color: #555;
+        }
+        #chat-container {
+            display: none;
+            text-align: center;
+            padding: 20px;
+            border-radius: 10px;
+            background-color: #fff;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+        #messages {
+            border: 1px solid #ccc;
+            padding: 10px;
+            height: 300px;
+            overflow-y: scroll;
+            background-color: #fff;
+            margin-bottom: 10px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+        .message {
+            margin: 5px 0;
+            max-width: 70%;
+            background-color: #e0e0e0;
+            padding: 10px;
+            border-radius: 10px;
+        }
+        .timestamp {
+            font-size: 0.8em;
+            color: gray;
+        }
+        #input-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        #message {
+            flex: 1;
+            padding: 10px;
+            border-radius: 5px;
+            border: 1px solid #ccc;
+            margin-right: 10px;
+            font-size: 16px;
+            outline: none;
+        }
+        #send-button {
+            background-color: #333;
+            color: #fff;
+            border: none;
+            padding: 10px 20px;
+            cursor: pointer;
+            border-radius: 5px;
+            font-size: 16px;
+            transition: background-color 0.3s;
+        }
+        #send-button:hover {
+            background-color: #555;
+        }
+    </style>
+</head>
+<body>
+    <div id="login-container">
+        <h1 id="random-chat-heading">Random Chat</h1>
+        <input type="text" id="username" placeholder="Enter username">
+        <br>
+        <button id="login-button" onclick="login()">Login</button>
+    </div>
+
+    <div id="chat-container" style="display: none;">
+        <div id="messages"></div>
+        <div id="input-container">
+            <input type="text" id="message" placeholder="Type a message...">
+            <button id="send-button" onclick="sendMessage()">Send</button>
+        </div>
+    </div>
+
+    <script src="/socket.io/socket.io.js"></script>
+    <script>
+        const socket = io();
+
+        function login() {
+            const username = document.getElementById('username').value.trim();
+            if (username) {
+                socket.emit('setUsername', username);
+                document.getElementById('login-container').style.display = 'none';
+                document.getElementById('chat-container').style.display = 'block';
+            } else {
+                alert("Please enter a username.");
+            }
+        }
+
+        socket.on('chatHistory', (history) => {
+            const messages = document.getElementById('messages');
+            messages.innerHTML = ''; // Clear current messages
+            history.forEach((data) => {
+                addMessage(data);
+            });
+        });
+
+        socket.on('chatMessage', (data) => {
+            addMessage(data);
+        });
+
+        function sendMessage() {
+            const message = document.getElementById('message').value.trim();
+            if (message) {
+                socket.emit('chatMessage', message);
+                document.getElementById('message').value = '';
+            }
+        }
+
+        function addMessage(data) {
+            const messages = document.getElementById('messages');
+            const message = document.createElement('div');
+            message.classList.add('message');
+            const timestamp = new Date(data.timestamp);
+            message.innerHTML = `<span class="timestamp">[${timestamp.toLocaleDateString()} ${timestamp.toLocaleTimeString()}]</span> <strong>${data.username}:</strong> ${data.message}`;
+            messages.appendChild(message);
+            messages.scrollTop = messages.scrollHeight; // Scroll to bottom
+        }
+    </script>
+</body>
+</html>
